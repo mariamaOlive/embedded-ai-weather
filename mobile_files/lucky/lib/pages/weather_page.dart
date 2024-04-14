@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
 import 'package:lucky/models/weather_model.dart';
 import 'package:lucky/services/weather_service.dart';
+import 'package:lucky/config/keys.dart';
 import 'dart:convert';
 import 'dart:async';
 import 'package:flutter_reactive_ble/flutter_reactive_ble.dart';
+
 
 class WeatherPage extends StatefulWidget {
   const WeatherPage({super.key});
@@ -17,7 +19,7 @@ class WeatherPage extends StatefulWidget {
 class _WeatherPageState extends State<WeatherPage>{
 
   //api key
-  final _weatherService = WeatherService("e3bd2e29341a2e86bbf173b5dd85e269");
+  final _weatherService = WeatherService(AppConfig.weatherOpenAPIKey);
   Weather? _weather; 
 
   // fetch weather
