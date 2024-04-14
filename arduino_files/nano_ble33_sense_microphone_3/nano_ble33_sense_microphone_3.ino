@@ -68,6 +68,8 @@ void setup()
     // while (!Serial);
     Serial.println("Edge Impulse Inferencing Demo");
 
+    randomSeed(analogRead(0));
+
       // begin initialization
     if (!BLE.begin()) {
       Serial.println("starting BLE failed!");
@@ -156,11 +158,12 @@ void loop()
       // ei_printf("I'm connected\n");
       long currentMillis = millis();
       
-      if (currentMillis - previousMillis >= 3000) {
+      if (currentMillis - previousMillis >= 6000) {
         previousMillis = currentMillis;
         ei_printf("Recording...\n");
-        test = test+1;
-        updateTemperature(test);
+        // test = test+1;
+        int randomNumber = random(1, 4);
+        updateTemperature(randomNumber);
     //     bool m = microphone_inference_record();
     //     if (!m) {
     //         ei_printf("ERR: Failed to record audio...\n");

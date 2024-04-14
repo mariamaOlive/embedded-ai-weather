@@ -21,15 +21,23 @@ class _WeatherPageState extends State<WeatherPage>{
   Weather? _weather; 
 
   // fetch weather
-  _fetchWeather() async {
+  _fetchWeather(String cityLabel) async {
     //get current city
-    // String cityName = await _weatherService.getCurrentCity();
-    String cityName ="Jakarta";
+    String cityName = _weatherService.getCurrentCity(cityLabel);
+    // String cityName ="Jakarta";
 
     //get weather for city
     try{
-      final weather = await _weatherService.getWeather(cityName);
-
+      dynamic weather;
+      if(cityName == "Unknown"){
+        weather =  Weather(
+          cityName: cityName, 
+          temperature: null, 
+          mainCondition: null
+        );
+      }else{
+        weather = await _weatherService.getWeather(cityName);
+      }
       setState(() {
         _weather = weather;
       });
@@ -41,68 +49,69 @@ class _WeatherPageState extends State<WeatherPage>{
   // weather animations
 
 
-  //Bluetooth  ///////// START HERE////////////
+  ////Bluetooth  ///////// START HERE////////////
 
-  // final _ble = FlutterReactiveBle();
+  final _ble = FlutterReactiveBle();
 
-  // StreamSubscription<DiscoveredDevice>? _scanSub;
-  // StreamSubscription<ConnectionStateUpdate>? _connectSub;
-  // StreamSubscription<List<int>>? _notifySub;
+  StreamSubscription<DiscoveredDevice>? _scanSub;
+  StreamSubscription<ConnectionStateUpdate>? _connectSub;
+  StreamSubscription<List<int>>? _notifySub;
 
-  // var _found = false;
-  // var _value = 'nothing';
+  var _found = false;
+  var _value = 'nothing';
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   _scanSub = _ble.scanForDevices(withServices: []).listen(_onScanUpdate);
-  // }
+  @override
+  void initState() {
+    super.initState();
+    _scanSub = _ble.scanForDevices(withServices: []).listen(_onScanUpdate);
+  }
 
-  // @override
-  // void dispose() {
-  //   _notifySub?.cancel();
-  //   _connectSub?.cancel();
-  //   _scanSub?.cancel();
-  //   super.dispose();
-  // }
+  @override
+  void dispose() {
+    _notifySub?.cancel();
+    _connectSub?.cancel();
+    _scanSub?.cancel();
+    super.dispose();
+  }
 
-  // void _onScanUpdate(DiscoveredDevice d) {
-  //   if (d.name == 'BLE-TEMP' && !_found) {
-  //     _found = true;
-  //     _connectSub = _ble.connectToDevice(id: d.id).listen((update) {
-  //       if (update.connectionState == DeviceConnectionState.connected) {
-  //         _onConnected(d.id);
-  //       }
-  //     });
-  //   }
-  // }
+  void _onScanUpdate(DiscoveredDevice d) {
+    if (d.name == 'BLE-TEMP' && !_found) {
+      _found = true;
+      _connectSub = _ble.connectToDevice(id: d.id).listen((update) {
+        if (update.connectionState == DeviceConnectionState.connected) {
+          _onConnected(d.id);
+        }
+      });
+    }
+  }
 
-  // void _onConnected(String deviceId) {
-  //   final characteristic = QualifiedCharacteristic(
-  //       deviceId: deviceId,
-  //       serviceId: Uuid.parse('00000000-5EC4-4083-81CD-A10B8D5CF6EC'),
-  //       characteristicId: Uuid.parse('00000001-5EC4-4083-81CD-A10B8D5CF6EC'));
+  void _onConnected(String deviceId) {
+    final characteristic = QualifiedCharacteristic(
+        deviceId: deviceId,
+        serviceId: Uuid.parse('00000000-5EC4-4083-81CD-A10B8D5CF6EC'),
+        characteristicId: Uuid.parse('00000001-5EC4-4083-81CD-A10B8D5CF6EC'));
 
-  //   _notifySub = _ble.subscribeToCharacteristic(characteristic).listen((bytes) {
-  //     setState(() {
-  //       _value = const Utf8Decoder().convert(bytes);  ///WITH city info
-  //     });
-  //   });
-  // }
+    _notifySub = _ble.subscribeToCharacteristic(characteristic).listen((bytes) {
+      // setState(() {
+      _value = const Utf8Decoder().convert(bytes);  ///WITH city info
+      _fetchWeather(_value);
+      // });
+    });
+  }
 
 /////////////////////////////////// END - BLUETOOTH /////////////////////
 
-  @override
-  void initState(){
-    super.initState();
+  // @override
+  // void initState(){
+  //   super.initState();
 
-    //Fetch weather on startup
-    _fetchWeather();
-  }
+  //   //Fetch weather on startup
+  //   _fetchWeather();
+  // }
 
   String getWeatherAnimation(String? mainCondition){
    
-    if (mainCondition == null) return 'assets/sunny-json'; // default to sunny
+    if (mainCondition == null) return 'assets/cat.json'; // default 
     
     switch (mainCondition.toLowerCase()){
       case 'clouds':
@@ -121,9 +130,9 @@ class _WeatherPageState extends State<WeatherPage>{
       case 'snow':
         return 'assets/snow.json';
       case 'clear':
-        return 'assets/sunny.json';
+        return 'assets/sun.json';
       default:
-        return 'assets/sunny.json';
+        return 'assets/cat.json';
     }
   }
 
@@ -135,17 +144,18 @@ class _WeatherPageState extends State<WeatherPage>{
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            //  Text(_value)
+          // Text(_value),
         
           Text(_weather?.cityName ?? "Loading city...", 
           style: TextStyle(fontSize: 30),
           ),
 
-          //Animation
+          // //Animation
           Lottie.asset(getWeatherAnimation(_weather?.mainCondition)),
         
-          Text('${_weather?.temperature.round()} °C',
-          style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),),
+          Text(_weather?.temperature == null ? "" : '${_weather?.temperature?.round()} °C',
+            style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),
+          ),
 
           //Main condition
           Text(_weather?.mainCondition ?? "",

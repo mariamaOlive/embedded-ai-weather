@@ -27,10 +27,18 @@ class WeatherService{
 //Jakarta
 //S%C3%A3o%20Paulo
 
-  Future<String> getCurrentCity() async{
+  String getCurrentCity(String cityLabel) {
 
-    String city = "Jakarta";
-    return city;
+    switch (cityLabel){
+      case "1":
+        return "Jakarta" ;
+      case "2": 
+        return "S%C3%A3o%20Paulo";
+      default: 
+        return "Unknown";
+   
+    }
   }
-}
 
+
+}
