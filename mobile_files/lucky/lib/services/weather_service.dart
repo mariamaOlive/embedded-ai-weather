@@ -22,6 +22,7 @@ class WeatherService{
     }
   }
 
+//http://api.openweathermap.org/data/2.5/weather?q=Jakarta&appid=e3bd2e29341a2e86bbf173b5dd85e269&units=metric
 
 //Jakarta
 //S%C3%A3o%20Paulo

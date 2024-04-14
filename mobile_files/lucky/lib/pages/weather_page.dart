@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lottie/lottie.dart';
 import 'package:lucky/models/weather_model.dart';
 import 'package:lucky/services/weather_service.dart';
 import 'dart:convert';
@@ -42,75 +43,113 @@ class _WeatherPageState extends State<WeatherPage>{
 
   //Bluetooth  ///////// START HERE////////////
 
-  final _ble = FlutterReactiveBle();
+  // final _ble = FlutterReactiveBle();
 
-  StreamSubscription<DiscoveredDevice>? _scanSub;
-  StreamSubscription<ConnectionStateUpdate>? _connectSub;
-  StreamSubscription<List<int>>? _notifySub;
+  // StreamSubscription<DiscoveredDevice>? _scanSub;
+  // StreamSubscription<ConnectionStateUpdate>? _connectSub;
+  // StreamSubscription<List<int>>? _notifySub;
 
-  var _found = false;
-  var _value = 'nothing';
+  // var _found = false;
+  // var _value = 'nothing';
 
-  @override
-  void initState() {
-    super.initState();
-    _scanSub = _ble.scanForDevices(withServices: []).listen(_onScanUpdate);
-  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   _scanSub = _ble.scanForDevices(withServices: []).listen(_onScanUpdate);
+  // }
 
-  @override
-  void dispose() {
-    _notifySub?.cancel();
-    _connectSub?.cancel();
-    _scanSub?.cancel();
-    super.dispose();
-  }
+  // @override
+  // void dispose() {
+  //   _notifySub?.cancel();
+  //   _connectSub?.cancel();
+  //   _scanSub?.cancel();
+  //   super.dispose();
+  // }
 
-  void _onScanUpdate(DiscoveredDevice d) {
-    if (d.name == 'BLE-TEMP' && !_found) {
-      _found = true;
-      _connectSub = _ble.connectToDevice(id: d.id).listen((update) {
-        if (update.connectionState == DeviceConnectionState.connected) {
-          _onConnected(d.id);
-        }
-      });
-    }
-  }
+  // void _onScanUpdate(DiscoveredDevice d) {
+  //   if (d.name == 'BLE-TEMP' && !_found) {
+  //     _found = true;
+  //     _connectSub = _ble.connectToDevice(id: d.id).listen((update) {
+  //       if (update.connectionState == DeviceConnectionState.connected) {
+  //         _onConnected(d.id);
+  //       }
+  //     });
+  //   }
+  // }
 
-  void _onConnected(String deviceId) {
-    final characteristic = QualifiedCharacteristic(
-        deviceId: deviceId,
-        serviceId: Uuid.parse('00000000-5EC4-4083-81CD-A10B8D5CF6EC'),
-        characteristicId: Uuid.parse('00000001-5EC4-4083-81CD-A10B8D5CF6EC'));
+  // void _onConnected(String deviceId) {
+  //   final characteristic = QualifiedCharacteristic(
+  //       deviceId: deviceId,
+  //       serviceId: Uuid.parse('00000000-5EC4-4083-81CD-A10B8D5CF6EC'),
+  //       characteristicId: Uuid.parse('00000001-5EC4-4083-81CD-A10B8D5CF6EC'));
 
-    _notifySub = _ble.subscribeToCharacteristic(characteristic).listen((bytes) {
-      setState(() {
-        _value = const Utf8Decoder().convert(bytes);  ///WITH city info
-      });
-    });
-  }
+  //   _notifySub = _ble.subscribeToCharacteristic(characteristic).listen((bytes) {
+  //     setState(() {
+  //       _value = const Utf8Decoder().convert(bytes);  ///WITH city info
+  //     });
+  //   });
+  // }
 
 /////////////////////////////////// END - BLUETOOTH /////////////////////
 
-  // @override
-  // void initState(){
-  //   super.initState();
+  @override
+  void initState(){
+    super.initState();
 
-  //   //Fetch weather on startup
-  //   _fetchWeather();
-  // }
+    //Fetch weather on startup
+    _fetchWeather();
+  }
+
+  String getWeatherAnimation(String? mainCondition){
+   
+    if (mainCondition == null) return 'assets/sunny-json'; // default to sunny
+    
+    switch (mainCondition.toLowerCase()){
+      case 'clouds':
+        return 'assets/cloud.json';
+      case 'mist': 
+      case 'smoke': 
+      case 'haze': 
+      case 'dust': 
+      case 'fog':
+        return 'assets/fog.json';
+      case 'rain':
+      case 'drizzle':
+      case 'shower rain':
+      case 'thunderstorm':
+        return 'assets/rain.json';
+      case 'snow':
+        return 'assets/snow.json';
+      case 'clear':
+        return 'assets/sunny.json';
+      default:
+        return 'assets/sunny.json';
+    }
+  }
 
   @override
   Widget build(BuildContext context){
     return  Scaffold(
+      backgroundColor: Colors.blue[400],
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-             Text(_value)
+            //  Text(_value)
         
-          // Text(_weather?.cityName ?? "Loading city..."),
+          Text(_weather?.cityName ?? "Loading city...", 
+          style: TextStyle(fontSize: 30),
+          ),
+
+          //Animation
+          Lottie.asset(getWeatherAnimation(_weather?.mainCondition)),
         
-          // Text('${_weather?.temperature.round()} C')
+          Text('${_weather?.temperature.round()} °C',
+          style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold),),
+
+          //Main condition
+          Text(_weather?.mainCondition ?? "",
+          style: TextStyle(fontSize: 20),),
         ],),
       ),
     );
