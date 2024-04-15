@@ -53,7 +53,7 @@ static bool debug_nn = false; // Set this to true to see e.g. features generated
 
 BLEService temperatureService = BLEService("00000000-5EC4-4083-81CD-A10B8D5CF6EC");
 BLECharacteristic temperatureCharacteristic = BLECharacteristic("00000001-5EC4-4083-81CD-A10B8D5CF6EC", BLERead | BLENotify, BUFFER_SIZE, false);
-int oldTemperature = 0;
+int oldTemperature = 9;
 int test = 0;
 long previousMillis = 0;
 
@@ -143,6 +143,19 @@ void setup()
 // #endif
 // }
 
+// Function to find the index of the maximum value in an array
+int findMaxValueIndex(float arr[], int size) {
+    int maxIndex = 0;
+    float maxValue = arr[0];
+    for (int i = 1; i < size; ++i) {
+        if (arr[i] > maxValue) {
+            maxValue = arr[i];
+            maxIndex = i;
+        }
+    }
+    return maxIndex;
+}
+
 void loop()
 {
   BLEDevice central = BLE.central();
@@ -159,62 +172,69 @@ void loop()
       long currentMillis = millis();
       
       if (currentMillis - previousMillis >= 6000) {
-        previousMillis = currentMillis;
+        previousMillis = currentMillis; 
+        // delay(8000);
         ei_printf("Recording...\n");
-        // test = test+1;
-        int randomNumber = random(1, 4);
-        updateTemperature(randomNumber);
-    //     bool m = microphone_inference_record();
-    //     if (!m) {
-    //         ei_printf("ERR: Failed to record audio...\n");
-    //         return;
-    //     }
+        bool m = microphone_inference_record();
+        if (!m) {
+            ei_printf("ERR: Failed to record audio...\n");
+            return;
+        }
+        ei_printf("Recording done\n");
 
-    //     ei_printf("Recording done\n");
+        signal_t signal;
+        signal.total_length = EI_CLASSIFIER_RAW_SAMPLE_COUNT;
+        signal.get_data = &microphone_audio_signal_get_data;
+        ei_impulse_result_t result = { 0 };
 
-    //     signal_t signal;
-    //     signal.total_length = EI_CLASSIFIER_RAW_SAMPLE_COUNT;
-    //     signal.get_data = &microphone_audio_signal_get_data;
-    //     ei_impulse_result_t result = { 0 };
+        EI_IMPULSE_ERROR r = run_classifier(&signal, &result, debug_nn);
+        if (r != EI_IMPULSE_OK) {
+            ei_printf("ERR: Failed to run classifier (%d)\n", r);
+            return;
+        }
 
-    //     EI_IMPULSE_ERROR r = run_classifier(&signal, &result, debug_nn);
-    //     if (r != EI_IMPULSE_OK) {
-    //         ei_printf("ERR: Failed to run classifier (%d)\n", r);
-    //         return;
-    //     }
+    // print the predictions
+    ei_printf("Predictions ");
+    ei_printf("(DSP: %d ms., Classification: %d ms., Anomaly: %d ms.)",
+        result.timing.dsp, result.timing.classification, result.timing.anomaly);
+    ei_printf(": \n");
+    float final_result[EI_CLASSIFIER_LABEL_COUNT];
+    for (size_t ix = 0; ix < EI_CLASSIFIER_LABEL_COUNT; ix++) {
+        ei_printf("    %s: %.5f\n", result.classification[ix].label, result.classification[ix].value);
+        final_result[ix] = result.classification[ix].value;
+    }
+    // Finding the index of the maximum value
+    int maxIndex = findMaxValueIndex(final_result, 3);
+    maxIndex = maxIndex;
+    ei_printf("Label with maximum value: %d\n", maxIndex);
+  #if EI_CLASSIFIER_HAS_ANOMALY == 1
+    ei_printf("    anomaly score: %.3f\n", result.anomaly);
+  #endif
 
-    //     // print the predictions
-    //     ei_printf("Predictions ");
-    //     ei_printf("(DSP: %d ms., Classification: %d ms., Anomaly: %d ms.)",
-    //         result.timing.dsp, result.timing.classification, result.timing.anomaly);
-    //     ei_printf(": \n");
-    //     for (size_t ix = 0; ix < EI_CLASSIFIER_LABEL_COUNT; ix++) {
-    //         ei_printf("    %s: %.5f\n", result.classification[ix].label, result.classification[ix].value);
-    //     }
-    // #if EI_CLASSIFIER_HAS_ANOMALY == 1
-    //     ei_printf("    anomaly score: %.3f\n", result.anomaly);
-    // #endif
         // updateTemperature("Jakar");
-        // updateTemperature(666);
+        updateTemperature(maxIndex);
+
+          // int randomNumber = random(0, 3);
+          // updateTemperature(randomNumber);
       }
     }
-   
   }
 }
 
 void updateTemperature(int temperature) {
   // float temperature = HS300x.readTemperature();
-  ei_printf("updating 1\n");
-  ei_printf("old %d\n", oldTemperature);
+  // ei_printf("updating 1\n");
+  ei_printf("Starting recording in 6 seconds...\n");
+  // ei_printf("old %d\n", oldTemperature);
   if (temperature != oldTemperature) {
-    ei_printf("updating 2\n");
+    // ei_printf("updating 2\n");
     char buffer[BUFFER_SIZE];
     int ret = snprintf(buffer, sizeof buffer, "%d", temperature);
-    ei_printf("ret %d\n", ret);
+    // ei_printf("ret %d\n", ret);
     if (ret >= 0) {
-      ei_printf("Sending...%d\n", temperature);
+      // ei_printf("Sending...%d\n", temperature);
       temperatureCharacteristic.writeValue(buffer);
-      ei_printf("Updating old...%d\n", temperature);
+      // ei_printf("Updating old...%d\n", temperature);
       oldTemperature = temperature;
     }
   }
