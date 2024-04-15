@@ -26,9 +26,9 @@ class WeatherService{
   String getCurrentCity(String cityLabel) {
 
     switch (cityLabel){
-      case "1":
+      case "0":
         return "Jakarta" ;
-      case "2": 
+      case "1": 
         return "S%C3%A3o%20Paulo";
       default: 
         return "Unknown";

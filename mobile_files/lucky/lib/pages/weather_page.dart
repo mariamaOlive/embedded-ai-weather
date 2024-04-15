@@ -148,7 +148,7 @@ class _WeatherPageState extends State<WeatherPage>{
           children: [
           // Text(_value),
         
-          Text(_weather?.cityName ?? "Loading city...", 
+          Text(_weather?.cityName ?? "Waiting for city...", 
           style: TextStyle(fontSize: 30),
           ),
 
