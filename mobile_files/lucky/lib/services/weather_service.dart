@@ -1,9 +1,8 @@
 import 'dart:convert';
-
 import '../models/weather_model.dart';       
 import 'package:http/http.dart' as http;         
 
-
+/// The WeatherService class is resposible for handling weather request at the API
 class WeatherService{
 
   static const BASE_URL ='http://api.openweathermap.org/data/2.5/weather';
@@ -11,6 +10,7 @@ class WeatherService{
 
   WeatherService(this.apiKey);
 
+  /// Requests the weather on the API.
   Future<Weather> getWeather(String cityName) async {
     final response = await http
         .get(Uri.parse('$BASE_URL?q=$cityName&appid=$apiKey&units=metric'));
@@ -23,6 +23,7 @@ class WeatherService{
   }
 
 
+  /// Selects the correct city name to request the weather
   String getCurrentCity(String cityLabel) {
 
     switch (cityLabel){

@@ -16,19 +16,22 @@ class WeatherPage extends StatefulWidget {
 }
 
 
+/// The WeatherPage class is the class of the page that requests and show weather information
 class _WeatherPageState extends State<WeatherPage>{
 
-  //api key
+  ///////////////// Weather API request function /////////////////
+
+  //Api Key in another file -> this file is not uploaded to GitHub due to security reasons
   final _weatherService = WeatherService(AppConfig.weatherOpenAPIKey);
   Weather? _weather; 
 
-  // fetch weather
+  // Fetches the weather on the API
   _fetchWeather(String cityLabel) async {
-    //get current city
+    //Get current city - Based on the bluetooth value
     String cityName = _weatherService.getCurrentCity(cityLabel);
-    // String cityName ="Jakarta";
+    // String cityName ="Jakarta"; //Uncomment this part to test with Jakarta
 
-    //get weather for city
+    //Request on the API
     try{
       dynamic weather;
       if(cityName == "Unknown"){
@@ -48,13 +51,10 @@ class _WeatherPageState extends State<WeatherPage>{
     }
   }
 
-  // weather animations
 
-
-  ////Bluetooth  ///////// START HERE////////////
+  ///////////////// Bluetooth functions /////////////////
 
   final _ble = FlutterReactiveBle();
-
   StreamSubscription<DiscoveredDevice>? _scanSub;
   StreamSubscription<ConnectionStateUpdate>? _connectSub;
   StreamSubscription<List<int>>? _notifySub;
@@ -62,12 +62,14 @@ class _WeatherPageState extends State<WeatherPage>{
   var _found = false;
   var _value = 'nothing';
 
+  //Initiate listening to bluetooth signal
   @override
   void initState() {
     super.initState();
     _scanSub = _ble.scanForDevices(withServices: []).listen(_onScanUpdate);
   }
 
+  //Closes connection
   @override
   void dispose() {
     _notifySub?.cancel();
@@ -76,6 +78,7 @@ class _WeatherPageState extends State<WeatherPage>{
     super.dispose();
   }
 
+  //Scans bluetooth device given a specific name
   void _onScanUpdate(DiscoveredDevice d) {
     if (d.name == 'BLE-TEMP' && !_found) {
       _found = true;
@@ -87,6 +90,7 @@ class _WeatherPageState extends State<WeatherPage>{
     }
   }
 
+  //Connects to bluetooth device and receives information
   void _onConnected(String deviceId) {
     final characteristic = QualifiedCharacteristic(
         deviceId: deviceId,
@@ -94,23 +98,15 @@ class _WeatherPageState extends State<WeatherPage>{
         characteristicId: Uuid.parse('00000001-5EC4-4083-81CD-A10B8D5CF6EC'));
 
     _notifySub = _ble.subscribeToCharacteristic(characteristic).listen((bytes) {
-      // setState(() {
-      _value = const Utf8Decoder().convert(bytes);  ///WITH city info
+      _value = const Utf8Decoder().convert(bytes);  ///Receive by bluetooth the city info
       _fetchWeather(_value);
-      // });
     });
   }
 
-/////////////////////////////////// END - BLUETOOTH /////////////////////
 
-  // @override
-  // void initState(){
-  //   super.initState();
+  ///////////////// Get screen images  /////////////////
 
-  //   //Fetch weather on startup
-  //   _fetchWeather();
-  // }
-
+  ///Obtains the correct animation provided the weather condition
   String getWeatherAnimation(String? mainCondition){
    
     if (mainCondition == null) return 'assets/cat.json'; // default 
@@ -138,6 +134,10 @@ class _WeatherPageState extends State<WeatherPage>{
     }
   }
 
+
+  ///////////////// App View - Main Page  /////////////////
+
+  ///Creates page layout and update conditions
   @override
   Widget build(BuildContext context){
     return  Scaffold(
@@ -146,7 +146,6 @@ class _WeatherPageState extends State<WeatherPage>{
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-          // Text(_value),
         
           Text(_weather?.cityName ?? "Waiting for city...", 
           style: TextStyle(fontSize: 30),

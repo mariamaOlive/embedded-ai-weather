@@ -1,3 +1,4 @@
+/// The Weather class models the object that contains the information of the weather
 class Weather{
 
   final String? cityName;
