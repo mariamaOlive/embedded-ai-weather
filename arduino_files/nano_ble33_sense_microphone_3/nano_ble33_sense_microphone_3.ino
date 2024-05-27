@@ -64,8 +64,7 @@ void setup()
 {
     // put your setup code here, to run once:
     Serial.begin(115200);
-    // comment out the below line to cancel the wait for USB connection (needed for native USB)
-    // while (!Serial);
+
     Serial.println("Edge Impulse Inferencing Demo");
 
     randomSeed(analogRead(0));
@@ -98,51 +97,6 @@ void setup()
     }
 }
 
-/**
- * @brief      Arduino main function. Runs the inferencing loop.
- */
-
-
-// void loop()
-// {
-//     ei_printf("Starting inferencing in 2 seconds...\n");
-
-//     delay(2000);
-
-//     ei_printf("Recording...\n");
-
-//     bool m = microphone_inference_record();
-//     if (!m) {
-//         ei_printf("ERR: Failed to record audio...\n");
-//         return;
-//     }
-
-//     ei_printf("Recording done\n");
-
-//     signal_t signal;
-//     signal.total_length = EI_CLASSIFIER_RAW_SAMPLE_COUNT;
-//     signal.get_data = &microphone_audio_signal_get_data;
-//     ei_impulse_result_t result = { 0 };
-
-//     EI_IMPULSE_ERROR r = run_classifier(&signal, &result, debug_nn);
-//     if (r != EI_IMPULSE_OK) {
-//         ei_printf("ERR: Failed to run classifier (%d)\n", r);
-//         return;
-//     }
-
-//     // print the predictions
-//     ei_printf("Predictions ");
-//     ei_printf("(DSP: %d ms., Classification: %d ms., Anomaly: %d ms.)",
-//         result.timing.dsp, result.timing.classification, result.timing.anomaly);
-//     ei_printf(": \n");
-//     for (size_t ix = 0; ix < EI_CLASSIFIER_LABEL_COUNT; ix++) {
-//         ei_printf("    %s: %.5f\n", result.classification[ix].label, result.classification[ix].value);
-//     }
-// #if EI_CLASSIFIER_HAS_ANOMALY == 1
-//     ei_printf("    anomaly score: %.3f\n", result.anomaly);
-// #endif
-// }
-
 // Function to find the index of the maximum value in an array
 int findMaxValueIndex(float arr[], int size) {
     int maxIndex = 0;
@@ -173,7 +127,6 @@ void loop()
       
       if (currentMillis - previousMillis >= 6000) {
         previousMillis = currentMillis; 
-        // delay(8000);
         ei_printf("Recording...\n");
         bool m = microphone_inference_record();
         if (!m) {
@@ -210,38 +163,23 @@ void loop()
   #if EI_CLASSIFIER_HAS_ANOMALY == 1
     ei_printf("    anomaly score: %.3f\n", result.anomaly);
   #endif
-
-        // updateTemperature("Jakar");
         updateTemperature(maxIndex);
-
-          // int randomNumber = random(0, 3);
-          // updateTemperature(randomNumber);
       }
     }
   }
 }
 
 void updateTemperature(int temperature) {
-  // float temperature = HS300x.readTemperature();
-  // ei_printf("updating 1\n");
   ei_printf("Starting recording in 6 seconds...\n");
-  // ei_printf("old %d\n", oldTemperature);
   if (temperature != oldTemperature) {
-    // ei_printf("updating 2\n");
     char buffer[BUFFER_SIZE];
     int ret = snprintf(buffer, sizeof buffer, "%d", temperature);
-    // ei_printf("ret %d\n", ret);
     if (ret >= 0) {
-      // ei_printf("Sending...%d\n", temperature);
       temperatureCharacteristic.writeValue(buffer);
-      // ei_printf("Updating old...%d\n", temperature);
       oldTemperature = temperature;
     }
   }
 }
-
-
-
 
 /**
  * @brief      PDM buffer full callback
